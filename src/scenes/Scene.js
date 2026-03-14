@@ -42,17 +42,15 @@ export default class Scene {
 
 	#setupCamera() {
 		this.#calculateAspectRatio();
-		this.camera = new THREE.PerspectiveCamera(45, this.aspectRatio, 0.001, 100);
-		this.camera.position.z = 8;
-		this.camera.position.y = -0.5;
+		this.camera = new THREE.PerspectiveCamera(45, this.aspectRatio, 1, 100);
+		this.camera.position.z = 3;
 	}
 
 	#setupCameraRig() {
 		this.cameraRig = new CameraRig(this.camera, {
 			target: new THREE.Vector3(0, 0, 0),
-			xLimit: [-0.25, 0.25],
-			yLimit: [-0.75, -0.25],
-			damping: 1.65,
+			xLimit: [-2, 2],
+			yLimit: [-0.75, 0.75],
 		});
 	}
 
@@ -81,7 +79,7 @@ export default class Scene {
 	}
 
 	animate(delta, elapsed) {
-		this.cameraRig && this.cameraRig.update(delta);
+		this.cameraRig?.update(delta);
 	}
 
 	onResize(width, height) {

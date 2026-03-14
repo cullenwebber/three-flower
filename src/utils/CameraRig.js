@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { easing } from "maath";
 
 export class CameraRig {
 	/**
@@ -7,14 +8,14 @@ export class CameraRig {
 	 * @param {THREE.Vector3} options.target - Point the camera looks at
 	 * @param {Array} options.xLimit - [min, max] for camera x position
 	 * @param {Array} options.yLimit - [min, max] for camera y position (optional)
-	 * @param {number} options.damping - Higher = slower movement
+	 * @param {number} options.smoothTime - Smooth time for easing (lower = faster)
 	 */
 	constructor(camera, options = {}) {
 		this.camera = camera;
 		this.target = options.target || new THREE.Vector3(0, 0, 0);
 		this.xLimit = options.xLimit || [-5, 5];
 		this.yLimit = options.yLimit || null;
-		this.damping = options.damping || 2;
+		this.smoothTime = options.smoothTime || 0.25;
 
 		// normalized pointer (-1..1)
 		this.pointer = { x: 0, y: 0 };
@@ -34,35 +35,23 @@ export class CameraRig {
 	 * @param {number} delta - Time delta in seconds
 	 */
 	update(delta) {
-		// Example: x reacts to pointer.x, scaled
 		const targetX = this.target.x + this.pointer.x * 2;
 		const limitedX = Math.max(
 			this.xLimit[0],
 			Math.min(this.xLimit[1], targetX),
 		);
-		this.camera.position.x = THREE.MathUtils.damp(
-			this.camera.position.x,
-			limitedX,
-			this.damping,
-			delta,
-		);
 
-		// Optional: y reacts to pointer.y
+		easing.damp(this.camera.position, "x", limitedX, this.smoothTime, delta);
+
 		if (this.yLimit) {
 			const targetY = this.target.y + this.pointer.y * 10;
 			const limitedY = Math.max(
 				this.yLimit[0],
 				Math.min(this.yLimit[1], targetY),
 			);
-			this.camera.position.y = THREE.MathUtils.damp(
-				this.camera.position.y,
-				limitedY,
-				this.damping,
-				delta,
-			);
+			easing.damp(this.camera.position, "y", limitedY, this.smoothTime, delta);
 		}
 
-		// Always look at target
-		// this.camera.lookAt(this.target);
+		this.camera.lookAt(this.target);
 	}
 }
