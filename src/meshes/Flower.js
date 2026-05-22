@@ -29,8 +29,8 @@ export default class Flower extends THREE.Group {
   #createMaterial() {
     return new THREE.MeshStandardMaterial({
       color: this.params.color,
-      roughness: 0.1,
-      metalness: 0.9,
+      roughness: 0.5,
+      metalness: 0.3,
       side: THREE.DoubleSide,
     });
   }
@@ -44,7 +44,7 @@ export default class Flower extends THREE.Group {
       const y = pos.getY(i);
       const v = THREE.MathUtils.clamp(y + 0.5, 0, 1);
 
-      const profile = Math.sin(Math.PI * Math.pow(v, 0.85));
+      const profile = Math.pow(Math.sin(Math.PI * Math.pow(v, 0.8)), 0.85);
       const halfWidth = profile * width * 0.5;
       const nx = x * 2 * halfWidth;
 
