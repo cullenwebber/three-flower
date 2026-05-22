@@ -61,7 +61,7 @@ class WebGLContext {
 		this.canvas.style.left = 0;
 		this.canvas.style.top = 0;
 		this.canvas.style.zIndex = 35;
-		this.canvas.style.pointerEvents = "none";
+		this.canvas.style.pointerEvents = "auto";
 
 		document.body.appendChild(this.canvas);
 

@@ -1,93 +1,81 @@
 import * as THREE from "three";
 import WebGLContext from "../core/WebGLContext";
 import ImportGltf from "../utils/ImportGltf";
-import { CameraRig } from "../utils/CameraRig";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import Flower from "../meshes/Flower";
 
 export default class Scene {
-	constructor() {
-		this.context = null;
-		this.camera = null;
-		this.cameraRig = null;
-		this.width = 0;
-		this.height = 0;
-		this.aspectRatio = 0;
-		this.scene = null;
-		this.envMap = null;
-		this.#init();
-	}
+  constructor() {
+    this.context = null;
+    this.camera = null;
+    this.cameraRig = null;
+    this.width = 0;
+    this.height = 0;
+    this.aspectRatio = 0;
+    this.scene = null;
+    this.envMap = null;
+    this.#init();
+  }
 
-	async #init() {
-		this.#setContext();
-		this.#setupScene();
-		this.#setupCamera();
-		this.#setupCameraRig();
-		this.#addLights();
-		await this.#addObjects();
-	}
+  async #init() {
+    this.#setContext();
+    this.#setupScene();
+    this.#setupCamera();
 
-	#setContext() {
-		this.context = new WebGLContext();
-	}
+    this.#addLights();
+    await this.#addObjects();
+  }
 
-	#setupScene() {
-		this.scene = new THREE.Scene();
-		const environment = new RoomEnvironment();
-		const pmremGenerator = new THREE.PMREMGenerator(this.context.renderer);
-		this.envMap = pmremGenerator.fromScene(environment).texture;
-		this.scene.environment = this.envMap;
-		this.scene.environmentIntensity = 1.0;
-		// this.scene.background = new THREE.Color(0x000000);
-	}
+  #setContext() {
+    this.context = new WebGLContext();
+  }
 
-	#setupCamera() {
-		this.#calculateAspectRatio();
-		this.camera = new THREE.PerspectiveCamera(45, this.aspectRatio, 1, 100);
-		this.camera.position.z = 3;
-	}
+  #setupScene() {
+    this.scene = new THREE.Scene();
+    const environment = new RoomEnvironment();
+    const pmremGenerator = new THREE.PMREMGenerator(this.context.renderer);
+    this.envMap = pmremGenerator.fromScene(environment).texture;
+    this.scene.environment = this.envMap;
+    this.scene.environmentIntensity = 1.0;
+    // this.scene.background = new THREE.Color(0x000000);
+  }
 
-	#setupCameraRig() {
-		this.cameraRig = new CameraRig(this.camera, {
-			target: new THREE.Vector3(0, 0, 0),
-			xLimit: [-2, 2],
-			yLimit: [-0.75, 0.75],
-		});
-	}
+  #setupCamera() {
+    this.#calculateAspectRatio();
+    this.camera = new THREE.PerspectiveCamera(45, this.aspectRatio, 1, 100);
+    this.camera.position.z = 3;
 
-	#addLights() {}
+    this.controls = new OrbitControls(this.camera, this.context.renderer.domElement);
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.08;
+  }
 
-	async #addObjects() {
-		new ImportGltf(`${import.meta.env.BASE_URL}__.glb`, {
-			onLoad: (model) => {
-				this.mesh = model;
+  #addLights() {}
 
-				this.mesh.traverse((children) => {
-					if (!children.isMesh) return;
-					children.material = material;
-				});
+  async #addObjects() {
+    this.flower = new Flower();
+    this.scene.add(this.flower);
+  }
 
-				this.scene.add(model);
-			},
-		});
-	}
+  #calculateAspectRatio() {
+    const { width, height } = this.context.getFullScreenDimensions();
+    this.width = width;
+    this.height = height;
+    this.aspectRatio = this.width / this.height;
+  }
 
-	#calculateAspectRatio() {
-		const { width, height } = this.context.getFullScreenDimensions();
-		this.width = width;
-		this.height = height;
-		this.aspectRatio = this.width / this.height;
-	}
+  animate(delta, elapsed) {
+    this.controls?.update();
+    // this.flower?.rotation.z += delta;
+  }
 
-	animate(delta, elapsed) {
-		this.cameraRig?.update(delta);
-	}
+  onResize(width, height) {
+    this.width = width;
+    this.height = height;
+    this.aspectRatio = width / height;
 
-	onResize(width, height) {
-		this.width = width;
-		this.height = height;
-		this.aspectRatio = width / height;
-
-		this.camera.aspect = this.aspectRatio;
-		this.camera.updateProjectionMatrix();
-	}
+    this.camera.aspect = this.aspectRatio;
+    this.camera.updateProjectionMatrix();
+  }
 }
