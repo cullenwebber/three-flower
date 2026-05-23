@@ -9,7 +9,12 @@ export default class Flower extends THREE.Group {
     cup = -0.95,
     bend = 0.5,
     tilt = 0,
-    centerRadius = 1.3,
+    centerRadius = 1.325,
+    rings = 8,
+    ringScale = 0.2,
+    ringRadiusScale = 0.11,
+    ringTiltStep = 0.08,
+    ringLift = 0.08,
   } = {}) {
     super();
     this.params = {
@@ -21,6 +26,11 @@ export default class Flower extends THREE.Group {
       bend,
       tilt,
       centerRadius,
+      rings,
+      ringScale,
+      ringRadiusScale,
+      ringTiltStep,
+      ringLift,
     };
     this.material = this.#createMaterial();
     this.#createPetals();
@@ -89,23 +99,45 @@ export default class Flower extends THREE.Group {
       bend,
       tilt,
       centerRadius,
+      rings,
+      ringScale,
+      ringRadiusScale,
+      ringTiltStep,
+      ringLift,
     } = this.params;
-    const geometry = this.#createPetalGeometry(
-      petalLength,
-      petalWidth,
-      cup,
-      bend,
-    );
 
-    for (let i = 0; i < petalCount; i++) {
-      const angle = (i / petalCount) * Math.PI * 2;
-      const petal = new THREE.Mesh(geometry, this.material);
-      petal.rotation.order = "YXZ";
-      petal.rotation.y = angle;
-      petal.rotation.x = -(Math.PI / 2) + tilt;
-      petal.position.x = Math.sin(angle) * centerRadius;
-      petal.position.z = Math.cos(angle) * centerRadius;
-      this.add(petal);
+    for (let r = 0; r < rings; r++) {
+      const t = rings > 1 ? r / (rings - 1) : 0;
+      const scale = THREE.MathUtils.lerp(1, ringScale, t);
+      const radiusScale = THREE.MathUtils.lerp(1, ringRadiusScale, t);
+      const ringLength = petalLength * scale;
+      const ringWidth = petalWidth * scale;
+      const ringCenter = centerRadius * radiusScale;
+      const ringTilt = tilt + ringTiltStep * r;
+      const ringCount = Math.max(5, Math.round(petalCount * Math.pow(0.9, r)));
+      const ringOffset = r * Math.PI * (3 - Math.sqrt(5));
+
+      const geometry = this.#createPetalGeometry(
+        ringLength,
+        ringWidth,
+        cup,
+        bend,
+      );
+
+      const ring = new THREE.Group();
+      ring.position.y = -ringLift * r;
+      this.add(ring);
+
+      for (let i = 0; i < ringCount; i++) {
+        const angle = (i / ringCount) * Math.PI * 2 + ringOffset;
+        const petal = new THREE.Mesh(geometry, this.material);
+        petal.rotation.order = "YXZ";
+        petal.rotation.y = angle;
+        petal.rotation.x = -(Math.PI / 2) + ringTilt;
+        petal.position.x = Math.sin(angle) * ringCenter;
+        petal.position.z = Math.cos(angle) * ringCenter;
+        ring.add(petal);
+      }
     }
 
     this.rotation.x = -Math.PI / 2;
